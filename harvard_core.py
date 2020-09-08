@@ -43,6 +43,24 @@ argparser.add_argument('--hostname',
     default = 'localhost',
     help    = 'Set hostname to connect to. Defaults to "localhost"')
 
+argparser.add_argument('--userid',
+    dest    = 'userid',
+    action  = 'store',
+    default = 'boa_test@test.com',
+    help    = 'Use a userid (email) which has been registered to the web UI. Defaults to "boa_test@test.com"')
+
+argparser.add_argument('--password',
+    dest    = 'password',
+    action  = 'store',
+    default = 'password',
+    help    = 'The password of the userid. Defaults to "password"')
+
+argparser.add_argument('--dataset',
+    dest    = 'dataset',
+    action  = 'store',
+    default = 'ammp',
+    help    = 'The dataset (benchmark) to be optimized. Defaults to "ammp"')
+
 ## Parse command-line arguments
 args = argparser.parse_args()
 
@@ -54,8 +72,8 @@ boaas = BOaaSClient(host=hostname)
 # config  benchmark  cycle  inst  power
 # depth  width  gpr_phys  br_resv  dmem_lat  load_lat  br_lat  fix_lat  fpu_lat
 # d2cache_lat  l2cache_size  icache_size  dcache_size
-df = pd.read_table("input/data_model_ammp.txt")
-#print(df)
+df = pd.read_table("input/data_model_{}.txt".format(args.dataset))
+print(df)
 # Get bips (billions of instructions per second)
 # Ref: http://people.duke.edu/~bcl15/code/core/code_asplos06.txt
 df['bips']=df['inst']/1.1*df['depth']/df['cycle']/18
@@ -84,7 +102,7 @@ def myfunc(x):
     return bips
 
 experiment_config = {
-    "name": "Harvard core",
+    "name": args.dataset,
     "domain": domain,
     "model":{"gaussian_process": {
     "kernel_func": "Matern52",
@@ -98,7 +116,7 @@ experiment_config = {
       "type": "random",
       "random": {
         "no_samples": 3,
-        "seed": None
+        "seed": 20200904
       }
     },
     "sampling_function": {
@@ -111,7 +129,7 @@ experiment_config = {
 
 }
 
-user = {"_id": "boa_test@test.com", "password": "password"}
+user = {"_id": args.userid, "password": args.password}
 user_login = boaas.login(user)
 
 if user_login == None:
